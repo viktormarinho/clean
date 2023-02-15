@@ -1,0 +1,6 @@
+{
+    "name": "funny",
+    "scripts": {
+        "hammer:dev": "echo hello"
+    }
+}

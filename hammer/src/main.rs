@@ -1,7 +1,8 @@
 use clap::Parser;
 use std::process::{Command, Stdio};
 use walkdir::{WalkDir, DirEntry};
-use std::fs;
+use std::path::Path;
+use std::io::{BufRead, BufReader};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -10,7 +11,30 @@ use std::fs;
     about = "Hammer is a no-config cli tool for running concurrent tasks with monorepo support", 
     long_about = None)]
 struct Args {
-    project: String,
+    command: String,
+}
+
+fn start_npm_process<T: 'static + Send + Fn(&str)>(process_dir: &Path, cmd: &String, cb: T) {
+    let child = Command::new("npm")
+            .current_dir(process_dir)
+            .arg("run")
+            .arg(format!("hammer:{}", cmd))
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect(&format!("Could not start child process on directory {}", process_dir.display()));
+    
+    std::thread::spawn(move || {
+        let mut f = BufReader::new(child.stdout.expect("Could not retrieve child std output"));
+        loop {
+            let mut buf = String::new();
+            match f.read_line(&mut buf) {
+                Ok(_) => {
+                    cb(buf.as_str());
+                },
+                Err(e) => println!("child err: {:?}", e)
+            }
+        }
+    });
 }
 
 fn is_hidden(entry: &DirEntry) -> bool {
@@ -20,14 +44,17 @@ fn is_hidden(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+fn get_package_json(file_path: &str) -> serde_json::Value {
+    let file_data = std::fs::read_to_string(file_path).expect(
+        &format!("Could not read file {file_path}")
+    );
+    serde_json::from_str(&file_data).expect(
+        &format!("Could not parse json file {file_path}")
+    )
+}
+
 fn main() {
     let args  = Args::parse();
-
-    let echo_child = Command::new("echo")
-    .arg("Standard outputting ^^!")
-    .stdout(Stdio::piped())
-    .output()
-    .expect("Failed to start echo process");
 
     let is_ignored = |path: &str| {
         let output = Command::new("git")
@@ -43,10 +70,6 @@ fn main() {
         false
     };
 
-    // Note that `echo_child` is moved here, but we won't be needing
-    // `echo_child` anymore
-    let message = String::from_utf8_lossy(&echo_child.stdout);
-
     for entry in WalkDir::new(".")
     .min_depth(1)
     .into_iter()
@@ -57,9 +80,34 @@ fn main() {
             return meta.is_file();
         }
         false
+    })
+    .filter(|f| {
+        f.path().to_str().unwrap().ends_with("package.json")   
+    })
+    .map(|f| {
+        (str::replace(f.path().to_str().unwrap(), "package.json", ""), 
+        get_package_json(f.path().to_str().unwrap()))
     }) {
-        println!("{}",  entry.path().display());
-    }
+        let process_dir = Path::new(&entry.0);
+        let project_package_json_path = String::from(format!("{}package.json", process_dir.display()));
+        entry.1.get("scripts").expect(
+            &format!("Could not find the 'scripts' block at the file {}", project_package_json_path)
+        ).get(format!("hammer:{}", args.command)).expect(
+            &format!("Could not find the desired script hammer:'{}' at the file {}", 
+            args.command, 
+            project_package_json_path));
 
-    println!("Process wrote: {}", message);
+        let process_name = entry.1.get("name").expect(
+            &format!("Could not find project name at file {}", project_package_json_path)
+        );
+
+        let process_name = match process_name {
+            serde_json::Value::String(name) => name.clone(),
+            _ => panic!("Project name at file {} was not a string", project_package_json_path)
+        };
+
+        start_npm_process(process_dir, &args.command, move |msg| {
+            println!("{}: {}", process_name, msg);
+        });
+    }
 }

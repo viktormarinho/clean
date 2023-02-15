@@ -1,0 +1,6 @@
+{
+    "name": "repl",
+    "scripts": {
+        "hammer:dev": "echo running dev"
+    }
+}
