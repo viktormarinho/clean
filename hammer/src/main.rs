@@ -2,7 +2,8 @@ use clap::Parser;
 use std::process::{Command, Stdio};
 use walkdir::{WalkDir, DirEntry};
 use std::path::Path;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader,Write};
+use std::io;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -23,7 +24,7 @@ fn start_npm_process<T: 'static + Send + Fn(&str)>(process_dir: &Path, cmd: &Str
             .spawn()
             .expect(&format!("Could not start child process on directory {}", process_dir.display()));
     
-    std::thread::spawn(move || {
+    tokio::spawn(async move {
         let mut f = BufReader::new(child.stdout.expect("Could not retrieve child std output"));
         loop {
             let mut buf = String::new();
@@ -53,7 +54,8 @@ fn get_package_json(file_path: &str) -> serde_json::Value {
     )
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args  = Args::parse();
 
     let is_ignored = |path: &str| {
@@ -107,7 +109,10 @@ fn main() {
         };
 
         start_npm_process(process_dir, &args.command, move |msg| {
-            println!("{}: {}", process_name, msg);
+            if msg.len() > 0 {
+                print!("{}: {}", process_name, msg);
+                io::stdout().flush().expect("Could not flush stdout");
+            }
         });
     }
 }
