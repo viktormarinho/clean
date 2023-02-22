@@ -1,10 +1,13 @@
 use clap::Parser;
-use std::process::{Command, Stdio};
-use walkdir::{WalkDir, DirEntry};
-use std::path::Path;
-use std::io::{BufRead, BufReader,Write};
-use std::io;
-use colored::Colorize;
+use walkdir::WalkDir;
+
+use fs_checks::{is_hidden, is_ignored};
+use npm_process::NpmProcessContext;
+
+mod fs_checks;
+mod package_json;
+mod tasks;
+mod npm_process;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -14,71 +17,16 @@ use colored::Colorize;
     long_about = None)]
 struct Args {
     command: String,
-}
 
-fn start_npm_process<T: 'static + Send + Fn(&str)>(process_dir: &Path, cmd: &String, cb: T) {
-    let mut child = Command::new("npm")
-            .current_dir(process_dir)
-            .arg("run")
-            .arg(format!("hammer:{}", cmd))
-            .stdout(Stdio::piped())
-            .spawn()
-            .expect(&format!("Could not start child process on directory {}", process_dir.display()));
-    
-    tokio::spawn(async move {
-        let mut f = BufReader::new(child.stdout.take().expect("Could not retrieve child std output"));
-        loop {
-            let mut buf = String::new();
-            match f.read_line(&mut buf) {
-                Ok(_) => {
-                    cb(buf.as_str());
-                },
-                Err(e) => println!("child err: {:?}", e)
-            }
-            if let Ok(status) = child.try_wait() {
-                if let Some(_status) = status {
-                    break
-                }
-            }
-        }
-    });
-}
-
-fn is_hidden(entry: &DirEntry) -> bool {
-    entry.file_name()
-         .to_str()
-         .map(|s| s.starts_with("."))
-         .unwrap_or(false)
-}
-
-fn get_package_json(file_path: &str) -> serde_json::Value {
-    let file_data = std::fs::read_to_string(file_path).expect(
-        &format!("Could not read file {file_path}")
-    );
-    serde_json::from_str(&file_data).expect(
-        &format!("Could not parse json file {file_path}")
-    )
+    #[arg(short, long)]
+    filter: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
     let args  = Args::parse();
 
-    let is_ignored = |path: &str| {
-        let output = Command::new("git")
-                                .arg("check-ignore")
-                                .arg(format!("{}", path))
-                                .output()
-                                .expect("Failed to execute command - do you have git installed?");
-
-        if output.stdout.len() > 0 {
-            return true
-        }
-
-        false
-    };
-
-    for entry in WalkDir::new(".")
+    WalkDir::new(".")
     .min_depth(1)
     .into_iter()
     .filter_entry(|f| { !is_ignored(f.file_name().to_str().unwrap()) && !is_hidden(&f) })
@@ -92,33 +40,19 @@ async fn main() {
     .filter(|f| {
         f.path().to_str().unwrap().ends_with("package.json")   
     })
-    .map(|f| {
-        (str::replace(f.path().to_str().unwrap(), "package.json", ""), 
-        get_package_json(f.path().to_str().unwrap()))
-    }) {
-        let process_dir = Path::new(&entry.0);
-        let project_package_json_path = String::from(format!("{}package.json", process_dir.display()));
-        entry.1.get("scripts").expect(
-            &format!("Could not find the 'scripts' block at the file {}", project_package_json_path)
-        ).get(format!("hammer:{}", args.command)).expect(
-            &format!("Could not find the desired script hammer:'{}' at the file {}", 
-            args.command, 
-            project_package_json_path));
-
-        let process_name = entry.1.get("name").expect(
-            &format!("Could not find project name at file {}", project_package_json_path)
-        );
-
-        let process_name = match process_name {
-            serde_json::Value::String(name) => name.clone(),
-            _ => panic!("Project name at file {} was not a string", project_package_json_path)
-        };
-
-        start_npm_process(process_dir, &args.command, move |msg| {
-            if msg.len() > 0 {
-                print!("{}: {}", process_name.blue().bold(), msg);
-                io::stdout().flush().expect("Could not flush stdout");
-            }
-        });
-    }
+    .map(|dir_entry| {
+        NpmProcessContext::new(dir_entry, args.command.clone())
+    })
+    .filter(|ctx| {
+        if let Some(filter) = &args.filter {
+            return ctx.name == filter.to_owned()
+        }
+        true
+    })
+    .filter(|ctx| {
+        ctx.contains_script()
+    })
+    .for_each(|process_context| {
+        tasks::start_npm_process(process_context);
+    })
 }
