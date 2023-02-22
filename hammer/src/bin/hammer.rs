@@ -1,9 +1,9 @@
 use clap::Parser;
 use walkdir::WalkDir;
 
-use hammer_tasks::fs_checks::{is_hidden, is_ignored};
-use hammer_tasks::npm_process::NpmProcessContext;
-use hammer_tasks::tasks;
+use hammer::fs_checks::{is_hidden, is_ignored};
+use hammer::npm_process::NpmProcessContext;
+use hammer::tasks;
 
 #[derive(Parser, Debug)]
 #[command(
