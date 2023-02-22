@@ -17,7 +17,7 @@ struct Args {
 }
 
 fn start_npm_process<T: 'static + Send + Fn(&str)>(process_dir: &Path, cmd: &String, cb: T) {
-    let child = Command::new("npm")
+    let mut child = Command::new("npm")
             .current_dir(process_dir)
             .arg("run")
             .arg(format!("hammer:{}", cmd))
@@ -26,7 +26,7 @@ fn start_npm_process<T: 'static + Send + Fn(&str)>(process_dir: &Path, cmd: &Str
             .expect(&format!("Could not start child process on directory {}", process_dir.display()));
     
     tokio::spawn(async move {
-        let mut f = BufReader::new(child.stdout.expect("Could not retrieve child std output"));
+        let mut f = BufReader::new(child.stdout.take().expect("Could not retrieve child std output"));
         loop {
             let mut buf = String::new();
             match f.read_line(&mut buf) {
@@ -34,6 +34,11 @@ fn start_npm_process<T: 'static + Send + Fn(&str)>(process_dir: &Path, cmd: &Str
                     cb(buf.as_str());
                 },
                 Err(e) => println!("child err: {:?}", e)
+            }
+            if let Ok(status) = child.try_wait() {
+                if let Some(_status) = status {
+                    break
+                }
             }
         }
     });
