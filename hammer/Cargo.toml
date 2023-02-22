@@ -1,5 +1,5 @@
 [package]
-name = "hammer"
+name = "hammer-tasks"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,3 +11,7 @@ walkdir = "2"
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 colored = "2.0.0"
+
+[[bin]]
+name = "hammer"
+path = "src/bin/hammer.rs"

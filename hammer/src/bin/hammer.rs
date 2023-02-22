@@ -1,13 +1,9 @@
 use clap::Parser;
 use walkdir::WalkDir;
 
-use fs_checks::{is_hidden, is_ignored};
-use npm_process::NpmProcessContext;
-
-mod fs_checks;
-mod package_json;
-mod tasks;
-mod npm_process;
+use hammer_tasks::fs_checks::{is_hidden, is_ignored};
+use hammer_tasks::npm_process::NpmProcessContext;
+use hammer_tasks::tasks;
 
 #[derive(Parser, Debug)]
 #[command(
