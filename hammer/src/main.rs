@@ -4,6 +4,7 @@ use walkdir::{WalkDir, DirEntry};
 use std::path::Path;
 use std::io::{BufRead, BufReader,Write};
 use std::io;
+use colored::Colorize;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -63,7 +64,7 @@ async fn main() {
                                 .arg("check-ignore")
                                 .arg(format!("{}", path))
                                 .output()
-                                .expect("Failed to execute command");
+                                .expect("Failed to execute command - do you have git installed?");
 
         if output.stdout.len() > 0 {
             return true
@@ -110,7 +111,7 @@ async fn main() {
 
         start_npm_process(process_dir, &args.command, move |msg| {
             if msg.len() > 0 {
-                print!("{}: {}", process_name, msg);
+                print!("{}: {}", process_name.blue().bold(), msg);
                 io::stdout().flush().expect("Could not flush stdout");
             }
         });
