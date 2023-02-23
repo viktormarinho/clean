@@ -1,4 +1,5 @@
 use serde_json::Value;
+use crate::errors::{BeautifulErrors,panic_err};
 
 use crate::package_json::get_package_json;
 
@@ -12,15 +13,18 @@ pub struct NpmProcessContext {
 
 impl NpmProcessContext {
     pub fn new(dir_entry: walkdir::DirEntry, script: String) -> Self {
-        let dir = str::replace(dir_entry.path().to_str().unwrap(), "package.json", "");
-        let package_json = get_package_json(dir_entry.path().to_str().unwrap());
+        let entry_path = dir_entry.path().to_str().expect_or_err(
+            &format!("Error converting directory path to string: {}", dir_entry.path().display())
+        );
+        let dir = str::replace(entry_path, "package.json", "");
+        let package_json = get_package_json(entry_path);
         let package_json_path = String::from(format!("{}package.json", dir));
-        let name = package_json.get("name").expect(
+        let name = package_json.get("name").expect_or_err(
             &format!("Could not find project name at file {}", package_json_path)
         );
         let name = match name {
             serde_json::Value::String(name) => name.clone(),
-            _ => panic!("Project name at file {} was not a string", package_json_path)
+            _ => panic_err(&format!("Project name at file {} was not a string", package_json_path))
         };
 
         Self {
