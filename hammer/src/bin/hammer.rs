@@ -6,16 +6,15 @@ use hammer_cli::npm_process::NpmProcessContext;
 use hammer_cli::tasks;
 
 #[derive(Parser, Debug)]
-#[command(
-    author = "viktormarinho", 
-    version = "0.0.1", 
-    about = "Hammer is a no-config cli tool for running concurrent tasks with monorepo support", 
-    long_about = None)]
+#[command(author, version, about, long_about = None)]
 struct Args {
     command: String,
 
     #[arg(short, long)]
     filter: Option<String>,
+
+    #[arg(short, long, default_value_t = false)]
+    no_prefix: bool,
 }
 
 #[tokio::main]
@@ -45,8 +44,8 @@ async fn main() {
         }
         true
     })
-    .filter(|ctx| {
-        ctx.contains_script()
+    .filter_map(|ctx| {
+        ctx.validate_script(args.no_prefix)
     })
     .for_each(|process_context| {
         tasks::start_npm_process(process_context);

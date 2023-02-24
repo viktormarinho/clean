@@ -36,16 +36,22 @@ impl NpmProcessContext {
         }
     }
 
-    pub fn contains_script(&self) -> bool {
+    pub fn validate_script(self, no_prefix: bool) -> Option<Self> {
         let scripts = self.package_json.get("scripts");
+        let script_name = format!("{}{}", {
+            if no_prefix { "" } else { "hammer:" }
+        }, self.script);
 
         if let Some(scripts) = scripts {
-            let choosen_script = scripts.get(format!("hammer:{}", self.script));
+            let choosen_script = scripts.get(script_name.clone());
             if let Some(_) = choosen_script {
-                return true;
+                return Some(Self {
+                    script: script_name,
+                    ..self
+                });
             }
-            return false;
+            return None;
         }
-        return false;
+        return None;
     }
 }

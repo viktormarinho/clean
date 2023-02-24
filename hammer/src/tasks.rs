@@ -19,7 +19,7 @@ pub fn start_npm_process(context: NpmProcessContext) {
     let mut child = Command::new("npm")
             .current_dir(path)
             .arg("run")
-            .arg(format!("hammer:{}", context.script))
+            .arg(context.script)
             .stdout(Stdio::piped())
             .spawn()
             .expect(&format!("Could not start child process on directory {}", path.display()));

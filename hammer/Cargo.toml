@@ -1,9 +1,9 @@
 [package]
 name = "hammer-cli"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["viktormarinho"]
-description = "A no-config task runner cli with monorepo support"
+description = "Hammer is a no-config cli tool for running concurrent tasks with monorepo support"
 license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
