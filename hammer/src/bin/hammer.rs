@@ -3,23 +3,11 @@ use walkdir::WalkDir;
 
 use hammer_cli::fs_checks::{is_hidden, is_ignored};
 use hammer_cli::npm_process::NpmProcessContext;
-use hammer_cli::tasks;
-
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    command: String,
-
-    #[arg(short, long)]
-    filter: Option<String>,
-
-    #[arg(short, long, default_value_t = false)]
-    no_prefix: bool,
-}
+use hammer_cli::{tasks, args};
 
 #[tokio::main]
 async fn main() {
-    let args  = Args::parse();
+    let args  = args::Args::parse();
     dotenv::dotenv().ok();
 
     WalkDir::new(".")
@@ -37,7 +25,7 @@ async fn main() {
         f.path().to_str().unwrap().ends_with("package.json")   
     })
     .map(|dir_entry| {
-        NpmProcessContext::new(dir_entry, args.command.clone())
+        NpmProcessContext::new(dir_entry, args.clone())
     })
     .filter(|ctx| {
         if let Some(filter) = &args.filter {
@@ -46,7 +34,7 @@ async fn main() {
         true
     })
     .filter_map(|ctx| {
-        ctx.validate_script(args.no_prefix)
+        ctx.validate_script()
     })
     .for_each(|process_context| {
         tasks::start_npm_process(process_context);
