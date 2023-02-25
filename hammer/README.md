@@ -47,3 +47,33 @@ hammer dev --filter web
 *Will only run the dev script of the project that contains a package.json with the "name" being "web"* 
 
 **alias**: -f
+
+#### Environment variables
+
+By default, hammer will load the root .env file and inject all of its variables in every child
+process that it starts. You can also pass variables via the command line, and they will override system
+variables or root .env variables. This is really useful for changing some environment in a testing script,
+for example:
+
+```bash
+hammer test --env NODE_ENV:TESTING
+```
+
+*Will run all workspaces "hammer:test" scripts and inject a environment variable NODE_ENV=TESTING*
+
+**alias**: -e
+
+I recommend setting up some scripts in the root package.json so it becomes easy to have these separate
+environments:
+
+```json
+{
+    ...
+    "scripts": {
+        "dev": "hammer dev",
+        "test": "hammer test -e NODE_ENV:TESTING"
+    },
+    ...
+}
+```
+*Easy to run with `pnpm dev`, `pnpm test`*
