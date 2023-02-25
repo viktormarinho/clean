@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use std::process::{Command, Stdio};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use std::io;
+use std::{io, env};
 use colored::Colorize;
 use std::io::Write;
 
@@ -16,8 +17,10 @@ fn handle_process_stdout(process_name: &String, msg: &str) {
 
 pub fn start_npm_process(context: NpmProcessContext) {
     let path = Path::new(&context.dir);
+    let root_env: HashMap<String, String> = env::vars().collect();
     let mut child = Command::new("npm")
             .current_dir(path)
+            .envs(&root_env)
             .arg("run")
             .arg(context.script)
             .stdout(Stdio::piped())

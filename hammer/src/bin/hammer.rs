@@ -20,6 +20,7 @@ struct Args {
 #[tokio::main]
 async fn main() {
     let args  = Args::parse();
+    dotenv::dotenv().ok();
 
     WalkDir::new(".")
     .min_depth(1)
