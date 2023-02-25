@@ -1,6 +1,6 @@
 # clean
 
-Clean is a monorepo for building my own Rust toolchain, including cli utils, apps, libraries.
+Clean is a monorepo for building my own Rust toolchain, including cli utils, apps, libraries and more.
 Starting as a hobby and a way of learning Rust.
 I think this name is temporary though... 🤔
 
