@@ -78,6 +78,8 @@
 //! }
 //! ```
 //! *Easy to run with `pnpm dev`, `pnpm test`*
+//! 
+//! #### Directory Depth
 
 pub mod fs_checks;
 pub mod npm_process;
