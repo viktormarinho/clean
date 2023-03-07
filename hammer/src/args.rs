@@ -13,4 +13,7 @@ pub struct Args {
 
     #[arg(short, long)]
     pub env: Option<Vec<String>>,
+
+    #[arg(short, long)]
+    pub depth: Option<usize>
 }

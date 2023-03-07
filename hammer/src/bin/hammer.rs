@@ -11,7 +11,13 @@ async fn main() {
     dotenv::dotenv().ok();
 
     WalkDir::new(".")
-    .min_depth(1)
+    .min_depth({
+        if let Some(depth) = args.depth {
+            depth
+        } else {
+            1
+        }
+    })
     .into_iter()
     .filter_entry(|f| { !is_ignored(f.file_name().to_str().unwrap()) && !is_hidden(&f) })
     .filter_map(|f| { f.ok() })
