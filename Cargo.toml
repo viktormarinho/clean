@@ -3,5 +3,6 @@
 members = [
     "repl",
     "hammer",
-    "minigit"
+    "minigit",
+    "replace-env"
 ]

@@ -201,6 +201,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "hammer-cli"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d8278eac1db380618c9cdd562decf19faa3d3a8b14f1b3e2afe7f79448964de"
+dependencies = [
+ "clap",
+ "colored",
+ "dotenv",
+ "serde_json",
+ "tokio",
+ "walkdir",
+]
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -466,6 +480,14 @@ name = "repl"
 version = "0.1.0"
 dependencies = [
  "rustyline",
+]
+
+[[package]]
+name = "replace-env"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "hammer-cli 0.3.1",
 ]
 
 [[package]]
