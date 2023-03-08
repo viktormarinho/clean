@@ -4,5 +4,5 @@ members = [
     "repl",
     "hammer",
     "minigit",
-    "replace-env"
+    "einer"
 ]
