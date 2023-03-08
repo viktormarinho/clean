@@ -10,3 +10,7 @@ license = "MIT"
 [dependencies]
 clap = { version = "4.1.4", features = ["cargo"] }
 hammer-cli = "0.3.0"
+
+[[bin]]
+name = "einer"
+path = "src/bin/einer.rs"

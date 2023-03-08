@@ -1,19 +1,15 @@
-use clap::Parser;
 use hammer_cli::errors::BeautifulErrors;
 use std::fs;
 
-#[derive(Parser, Debug, Clone)]
-struct Args {
-    url_gitpod: String,
+#[derive(Debug, Clone, clap::Parser)]
+pub struct ReplaceEnv {
+    gitpod_url: String
 }
 
-// https://3000-etseiner-einer-4p8pzjtskbo.ws-us89b.gitpod.io
-
-fn main() {
-    let args = Args::parse();
+pub fn run(args: ReplaceEnv) {
 
     let port = {
-        let sliced: Vec<&str> = args.url_gitpod.split("//").collect();
+        let sliced: Vec<&str> = args.gitpod_url.split("//").collect();
         sliced
             .get(1)
             .expect_or_err("Url do gitpod não está formatada corretamente")
@@ -38,7 +34,7 @@ fn main() {
             }
         };
 
-        let line = line.replace(&format!("=http://localhost:{}", line_port), &format!("={}", &args.url_gitpod.replace(&port, line_port)));
+        let line = line.replace(&format!("=http://localhost:{}", line_port), &format!("={}", &args.gitpod_url.replace(&port, line_port)));
 
         fixed_env.push_str(&line);
         fixed_env.push_str("\n");
