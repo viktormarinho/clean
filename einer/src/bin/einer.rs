@@ -7,12 +7,12 @@ struct Args {
     command: Commands
 }
 
-// https://3000-etseiner-einer-4p8pzjtskbo.ws-us89b.gitpod.io
-
 fn main() {
     let args = Args::parse();
 
     match &args.command {
-        Commands::ReplaceEnv(args) => einer::replace_env::run(args.to_owned())
+        Commands::ReplaceEnv(args) => args.to_owned().run_replace(),
+        Commands::CopyEnv(args) => args.to_owned().run(),
+        Commands::SetupEnv(args) => args.to_owned().run_setup(),
     }
 }

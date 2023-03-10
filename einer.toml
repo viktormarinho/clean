@@ -1,0 +1,1 @@
+env_dirs = ["./", "./apps/auth/", "./apps/ets-s3/", "./apps/server-borum/", "./apps/server-planner/"]
