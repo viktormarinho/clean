@@ -23,6 +23,14 @@ impl GitpodUrl {
             )
         };
 
+        let replaceable_url = {
+            if replaceable_url.chars().last().unwrap() == '/' {
+                replaceable_url[0..replaceable_url.len() - 1].to_string()
+            } else {
+                replaceable_url
+            }
+        };
+
         let env_file = fs::read_to_string(".env.dev").expect_or_err("Não consegui achar o arquivo .env.dev. Você está executando este comando da root do projeto?");
 
         let mut fixed_env = String::new();
