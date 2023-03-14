@@ -14,5 +14,7 @@ fn main() {
         Commands::ReplaceEnv(args) => args.to_owned().run_replace(),
         Commands::CopyEnv(args) => args.to_owned().run(),
         Commands::SetupEnv(args) => args.to_owned().run_setup(),
+        Commands::RunRedis(args) => args.to_owned().run(),
+        Commands::InitRepo(args) => args.to_owned().run(),
     }
 }

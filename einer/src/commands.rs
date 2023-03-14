@@ -2,6 +2,8 @@ use clap::Subcommand;
 
 use crate::gitpod_env::GitpodUrl;
 use crate::copy_env::CopyEnv;
+use crate::run_redis::RunRedis;
+use crate::init_repo::InitRepo;
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum Commands {
@@ -11,4 +13,8 @@ pub enum Commands {
     CopyEnv(CopyEnv),
     // Runs replace-env, copy-env and then returns the root .env.dev to the original state
     SetupEnv(GitpodUrl),
+    // Runs einer package.json's "run-redis" script 
+    RunRedis(RunRedis),
+    // Runs einer package.json's "init-repo" script
+    InitRepo(InitRepo),
 }
