@@ -1,6 +1,6 @@
 use clap::Subcommand;
 
-use crate::gitpod_env::GitpodUrl;
+use crate::gitpod::GitpodUrl;
 use crate::copy_env::CopyEnv;
 use crate::run_redis::RunRedis;
 use crate::init_repo::InitRepo;
@@ -17,4 +17,6 @@ pub enum Commands {
     RunRedis(RunRedis),
     // Runs einer package.json's "init-repo" script
     InitRepo(InitRepo),
+    // Setup einer gitpod env and then runs the initial repo setup commands
+    StartGitpod(GitpodUrl),
 }

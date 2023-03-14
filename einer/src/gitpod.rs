@@ -1,7 +1,7 @@
 use hammer_cli::errors::BeautifulErrors;
 use std::fs;
 
-use crate::copy_env::CopyEnv;
+use crate::{copy_env::CopyEnv, run_redis::RunRedis, init_repo::InitRepo, log};
 
 #[derive(Debug, Clone, clap::Parser)]
 pub struct GitpodUrl {
@@ -66,5 +66,20 @@ impl GitpodUrl {
 
         fs::write(".env.dev", orig_env)
             .expect_or_err("Não foi possível voltar o arquivo .env.dev ao seu estado original");
+    }
+
+    pub fn start(self) {
+        log::print("Iniciando configuração do gitpod...");
+
+        log::print("Configurando variáveis de ambiente...");
+        self.run_setup();
+        
+        log::print("Instalando e iniciando o redis...");
+        RunRedis{}.run();
+
+        log::print("Instalando dependências e rodando scripts iniciais...");
+        InitRepo{}.run();
+
+        log::print("Tudo pronto! Basta começar a desenvolver usando 'pnpm dev'");
     }
 }
