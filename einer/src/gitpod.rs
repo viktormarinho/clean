@@ -72,15 +72,15 @@ impl GitpodUrl {
         let cfg = config::get_config();
 
         cfg.open_ports.iter().for_each(|port| {
-            Command::new("gp")
-                .current_dir(".")
-                .arg("ports")
-                .arg("expose")
-                .arg(port)
-                .spawn()
-                .expect_or_err(&format!("Não foi possível spawnar o comando 'gp ports expose' na porta {port}"))
-                .wait()
-                .expect_or_err(&format!("Erro ao expor a porta {port}"));
+            // Command::new("gp")
+            //     .current_dir(".")
+            //     .arg("ports")
+            //     .arg("expose")
+            //     .arg(port)
+            //     .spawn()
+            //     .expect_or_err(&format!("Não foi possível spawnar o comando 'gp ports expose' na porta {port}"))
+            //     .wait()
+            //     .expect_or_err(&format!("Erro ao expor a porta {port}"));
 
             Command::new("gp")
                 .current_dir(".")
