@@ -50,6 +50,11 @@ impl GitpodUrl {
                 &format!("={}", &replaceable_url.replace("XXXX", line_port)),
             );
 
+            let line = line.replace(
+                "BASE_DOMAIN=null",
+                "BASE_DOMAIN=.gitpod.io"
+            );
+
             fixed_env.push_str(&line);
             fixed_env.push_str("\n");
         }
