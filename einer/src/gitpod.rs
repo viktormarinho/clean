@@ -1,7 +1,7 @@
 use hammer_cli::errors::BeautifulErrors;
-use std::fs;
+use std::{fs, process::Command};
 
-use crate::{copy_env::CopyEnv, run_redis::RunRedis, init_repo::InitRepo, log};
+use crate::{copy_env::CopyEnv, run_redis::RunRedis, init_repo::InitRepo, log, config};
 
 #[derive(Debug, Clone, clap::Parser)]
 pub struct GitpodUrl {
@@ -58,14 +58,40 @@ impl GitpodUrl {
             .expect_or_err("Não foi possivel sobrescrever o arquivo .env.dev");
     }
 
-    pub fn run_setup(self) {
+    pub fn run_setup(&self) {
         let orig_env = fs::read_to_string(".env.dev").expect_or_err("Não consegui achar o arquivo .env.dev. Você está executando este comando da root do projeto?");
 
-        GitpodUrl{gitpod_url: self.gitpod_url}.run_replace();
+        GitpodUrl{gitpod_url: self.gitpod_url.to_owned()}.run_replace();
         CopyEnv{}.run();
 
         fs::write(".env.dev", orig_env)
             .expect_or_err("Não foi possível voltar o arquivo .env.dev ao seu estado original");
+    }
+
+    pub fn expose_ports(&self) {
+        let cfg = config::get_config();
+
+        cfg.open_ports.iter().for_each(|port| {
+            Command::new("gp")
+                .current_dir(".")
+                .arg("ports")
+                .arg("expose")
+                .arg(port)
+                .spawn()
+                .expect_or_err(&format!("Não foi possível spawnar o comando 'gp ports expose' na porta {port}"))
+                .wait()
+                .expect_or_err(&format!("Erro ao expor a porta {port}"));
+
+            Command::new("gp")
+                .current_dir(".")
+                .arg("ports")
+                .arg("visibility")
+                .arg(&format!("{port}:public"))
+                .spawn()
+                .expect_or_err(&format!("Não foi possível spawnar o comando 'gp ports visibility' na porta {port}"))
+                .wait()
+                .expect_or_err(&format!("Erro ao deixar a porta {port} pública"));
+        });
     }
 
     pub fn start(self) {
@@ -74,11 +100,10 @@ impl GitpodUrl {
         log::print("Configurando variáveis de ambiente...");
         self.run_setup();
         
-        log::print("Instalando e iniciando o redis...");
-        RunRedis{}.run();
+        RunRedis.run();
+        InitRepo.run();
 
-        log::print("Instalando dependências e rodando scripts iniciais...");
-        InitRepo{}.run();
+        self.expose_ports();
 
         log::print("Tudo pronto! Basta começar a desenvolver usando 'pnpm dev'");
     }
